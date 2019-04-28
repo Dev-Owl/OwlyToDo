@@ -5,7 +5,6 @@ import 'package:validate/validate.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
 
-
 enum ConfirmAction { CANCEL, ACCEPT }
 
 class TodoEditorPage extends StatefulWidget {
@@ -29,6 +28,7 @@ class _EditorState extends State<TodoEditorPage> {
 
   bool _editMode = false;
   bool _changed = false;
+  bool _dateChanged = false;
 
   _EditorState(this._editMode);
 
@@ -53,11 +53,11 @@ class _EditorState extends State<TodoEditorPage> {
         lastDate: new DateTime(2040));
 
     if (result == null) return;
-    if (widget.item.dueDate != result) _changed = true;
 
-    widget.item.dueDate = result;
     setState(() {
       _dueDateController.text = new DateFormat.yMd().format(result);
+      widget.item.dueDate = result;
+      _dateChanged = true;
     });
   }
 
@@ -160,6 +160,9 @@ class _EditorState extends State<TodoEditorPage> {
                 decoration: InputDecoration(
                   labelText: "Due date",
                 ),
+                onSaved: (String value){
+                  widget.item.dueDate = convertToDate(value);
+                },
                 keyboardType: TextInputType.datetime,
                 controller: _dueDateController,
                 validator: (val) => isValidDate(val) ? null : "Invalid date",
@@ -205,8 +208,8 @@ class _EditorState extends State<TodoEditorPage> {
   }
 
   Future<bool> _onWillPop() {
-    return _editMode && _changed
-        ? showDialog(
+    return _editMode && (_changed | _dateChanged)
+        ? showDialog<bool>(
               context: context,
               barrierDismissible: false,
               builder: (context) => new AlertDialog(
@@ -233,9 +236,11 @@ class _EditorState extends State<TodoEditorPage> {
     if (_titleController.text != widget.item.title) changeFound = true;
     if (_descrptionController.text != widget.item.description)
       changeFound = true;
-
-    if (_dueDateController.text !=
+    if(widget.item.dueDate != null){
+      if (_dueDateController.text !=
         new DateFormat.yMd().format(widget.item.dueDate)) changeFound = true;
+    }
+    
 
     _changed = changeFound;
   }
@@ -272,7 +277,7 @@ class _EditorState extends State<TodoEditorPage> {
                               content: new Text('Delete this record?'),
                               actions: <Widget>[
                                 new FlatButton(
-                                  onPressed: (){
+                                  onPressed: () {
                                     Navigator.of(context).pop();
                                   },
                                   child: new Text('No'),
