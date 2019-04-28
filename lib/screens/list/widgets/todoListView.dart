@@ -7,7 +7,6 @@ import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-
 class TodoItem {
   String id;
   String title;
@@ -16,7 +15,7 @@ class TodoItem {
   DateTime dueDate;
   DateTime doneDate;
 
-  TodoItem({this.title = "New todo item"});
+  TodoItem();
 
   Future setDoneFlag(bool newState) async {
     done = newState;
@@ -27,13 +26,13 @@ class TodoItem {
     else
       doneDate = null;
 
-    await db.update("todo", toMap(skipId: true),
-        where: "id = ?", whereArgs: [id]);
+    await db
+        .update("todo", toMap(skipId: true), where: "id = ?", whereArgs: [id]);
   }
-  
-  Future delete() async{
-     var db = await DBProvider.db.database;
-     await db.delete("todo",where: "id = ?", whereArgs: [id]);
+
+  Future delete() async {
+    var db = await DBProvider.db.database;
+    await db.delete("todo", where: "id = ?", whereArgs: [id]);
   }
 
   Map<String, dynamic> toMap({bool skipId = false}) {
@@ -45,9 +44,13 @@ class TodoItem {
     map["done"] = this.done ? 1 : 0;
     if (dueDate != null) {
       map["dueDate"] = dueDate?.millisecondsSinceEpoch;
+    } else {
+      map["dueDate"] = null;
     }
     if (doneDate != null) {
       map["doneDate"] = doneDate?.millisecondsSinceEpoch;
+    } else {
+      map["doneDate"] = null;
     }
     return map;
   }
@@ -65,7 +68,7 @@ class TodoItem {
 }
 
 class TodoList {
-  TodoList(this._context,this._stateChanged);
+  TodoList(this._context, this._stateChanged);
 
   final BuildContext _context;
   final List<TodoItem> listData = new List();
@@ -92,8 +95,6 @@ class TodoList {
         })?.toList() ??
         new List<TodoItem>();
   }
-
- 
 
   Widget buildList() {
     final List<Widget> data = new List<Widget>();
@@ -159,15 +160,13 @@ class TodoList {
       ),
       actions: <Widget>[
         new IconSlideAction(
-          caption: item.done ? 'Undue' : 'Done',
-          color: Colors.blue,
-          icon: Icons.done,
-          onTap: ()async {
-            await item.setDoneFlag(!item.done);
-            if(_stateChanged != null)
-              _stateChanged();
-          }
-        ),
+            caption: item.done ? 'Undue' : 'Done',
+            color: Colors.blue,
+            icon: Icons.done,
+            onTap: () async {
+              await item.setDoneFlag(!item.done);
+              if (_stateChanged != null) _stateChanged();
+            }),
         new IconSlideAction(
           caption: 'Edit',
           color: Colors.indigo,
@@ -177,15 +176,13 @@ class TodoList {
       ],
       secondaryActions: <Widget>[
         new IconSlideAction(
-          caption: 'Delete',
-          color: Colors.red,
-          icon: Icons.delete,
-          onTap:  ()async {
-            await item.delete();
-            if(_stateChanged != null)
-              _stateChanged();
-          }
-        ),
+            caption: 'Delete',
+            color: Colors.red,
+            icon: Icons.delete,
+            onTap: () async {
+              await item.delete();
+              if (_stateChanged != null) _stateChanged();
+            }),
       ],
     );
   }

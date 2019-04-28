@@ -51,12 +51,12 @@ class _EditorState extends State<TodoEditorPage> {
         initialDate: initialDate,
         firstDate: new DateTime(1970),
         lastDate: new DateTime(2040));
-
-    if (result == null) return;
-
     setState(() {
-      _dueDateController.text = new DateFormat.yMd().format(result);
       widget.item.dueDate = result;
+      if (result != null)
+        _dueDateController.text = new DateFormat.yMd().format(result);
+      else
+        _dueDateController.text = null;
       _dateChanged = true;
     });
   }
@@ -120,9 +120,6 @@ class _EditorState extends State<TodoEditorPage> {
   }
 
   Widget _buildForm() {
-    if (widget.item.dueDate != null)
-      _dueDateController.text =
-          new DateFormat.yMd().format(widget.item.dueDate);
     return Form(
       key: _formKey,
       child: new ListView(
@@ -160,7 +157,7 @@ class _EditorState extends State<TodoEditorPage> {
                 decoration: InputDecoration(
                   labelText: "Due date",
                 ),
-                onSaved: (String value){
+                onSaved: (String value) {
                   widget.item.dueDate = convertToDate(value);
                 },
                 keyboardType: TextInputType.datetime,
@@ -236,11 +233,10 @@ class _EditorState extends State<TodoEditorPage> {
     if (_titleController.text != widget.item.title) changeFound = true;
     if (_descrptionController.text != widget.item.description)
       changeFound = true;
-    if(widget.item.dueDate != null){
+    if (widget.item.dueDate != null) {
       if (_dueDateController.text !=
-        new DateFormat.yMd().format(widget.item.dueDate)) changeFound = true;
+          new DateFormat.yMd().format(widget.item.dueDate)) changeFound = true;
     }
-    
 
     _changed = changeFound;
   }
@@ -250,6 +246,9 @@ class _EditorState extends State<TodoEditorPage> {
     super.initState();
     _titleController.text = widget.item.title;
     _descrptionController.text = widget.item.description;
+    if (widget.item.dueDate != null)
+      _dueDateController.text =
+          new DateFormat.yMd().format(widget.item.dueDate);
 
     _dueDateController.addListener(_checkForAnyChange);
     _titleController.addListener(_checkForAnyChange);
