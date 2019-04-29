@@ -4,6 +4,7 @@ import 'package:owly_todo/screens/list/widgets/todoListView.dart';
 import 'package:validate/validate.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 enum ConfirmAction { CANCEL, ACCEPT }
 
@@ -34,7 +35,7 @@ class _EditorState extends State<TodoEditorPage> {
 
   DateTime convertToDate(String input) {
     try {
-      var d = new DateFormat.yMd().parseStrict(input);
+      var d = new DateFormat.yMd().add_Hm().parseStrict(input);
       return d;
     } catch (e) {
       return null;
@@ -54,7 +55,7 @@ class _EditorState extends State<TodoEditorPage> {
     setState(() {
       widget.item.dueDate = result;
       if (result != null)
-        _dueDateController.text = new DateFormat.yMd().format(result);
+        _dueDateController.text = new DateFormat.yMd().add_Hm().format(result);
       else
         _dueDateController.text = null;
       _dateChanged = true;
@@ -72,10 +73,14 @@ class _EditorState extends State<TodoEditorPage> {
       if (_formKey.currentState.validate()) {
         _formKey.currentState.save();
         var db = await DBProvider.db.database;
-        //TODO refactore the below lines into an upsert call
-        if (await db.update("todo", widget.item.toMap(skipId: true),
-                where: "id = ?", whereArgs: [widget.item.id]) ==
-            0) await db.insert("todo", widget.item.toMap());
+        await DBProvider.db.upsert(() {
+          return db.update("todo", widget.item.toMap(skipId: true),
+              where: "id = ?", whereArgs: [widget.item.id]);
+        }, () {
+          return db.insert("todo", widget.item.toMap());
+        });
+        if(widget.item.dueDate != null)
+          await _sheduleNotification(widget.item);
         Navigator.of(context).pop();
       }
     } else {
@@ -90,6 +95,31 @@ class _EditorState extends State<TodoEditorPage> {
         Navigator.of(context).pop();
       }
     }
+  }
+
+  Future<void> _sheduleNotification(TodoItem item) async {
+    try{
+      flutterLocalNotificationsPlugin.cancel(item.id.hashCode);
+    }
+    catch(e){
+
+    }
+
+    var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
+        'todo_item_pending',
+        'Owly Todo',
+        'Pending todo items');
+    var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
+    NotificationDetails platformChannelSpecifics = new NotificationDetails(
+        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.schedule(
+        item.id.hashCode,
+        item.title,
+        'You have a todo item pending',
+        item.dueDate, 
+        platformChannelSpecifics,
+        payload: "openTodo;${item.id}");
+        
   }
 
   Future<ConfirmAction> _asyncConfirmDialog(BuildContext context) async {
@@ -235,7 +265,7 @@ class _EditorState extends State<TodoEditorPage> {
       changeFound = true;
     if (widget.item.dueDate != null) {
       if (_dueDateController.text !=
-          new DateFormat.yMd().format(widget.item.dueDate)) changeFound = true;
+          new DateFormat.yMd().add_Hm().format(widget.item.dueDate)) changeFound = true;
     }
 
     _changed = changeFound;
@@ -248,7 +278,7 @@ class _EditorState extends State<TodoEditorPage> {
     _descrptionController.text = widget.item.description;
     if (widget.item.dueDate != null)
       _dueDateController.text =
-          new DateFormat.yMd().format(widget.item.dueDate);
+          new DateFormat.yMd().add_Hm().format(widget.item.dueDate);
 
     _dueDateController.addListener(_checkForAnyChange);
     _titleController.addListener(_checkForAnyChange);
