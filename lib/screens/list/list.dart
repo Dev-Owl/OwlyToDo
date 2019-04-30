@@ -1,6 +1,8 @@
 import 'dart:core';
 
 import 'package:flutter/material.dart';
+import 'package:owly_todo/helper/dbProvider.dart';
+import 'package:owly_todo/helper/todoitem.dart';
 import 'package:owly_todo/main.dart';
 import 'package:owly_todo/screens/editor/editor.dart';
 import 'package:owly_todo/screens/list/widgets/todoListView.dart';
@@ -9,20 +11,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 //TODO show setting icon to change setting
 //TODO add setting screen to change:
 // - Hide done by default
-//TODO run background service to show notification
+// - Save on leave
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -30,20 +22,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  TodoList todoListWidgetHelper;
-  bool loading = false;
-
-  void _openAddNote() {
-    todoListWidgetHelper.openEditor(TodoItem());
-  }
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    loading = true;
-
-    var initializationSettingsAndroid =
-        AndroidInitializationSettings('app_icon');
+    //Init the notificaiton plugin
+    var initializationSettingsAndroid = AndroidInitializationSettings(
+        'app_icon'); //TODO Replace the current icon
     var initializationSettingsIOS = IOSInitializationSettings(
         onDidReceiveLocalNotification: onDidRecieveLocalNotification);
 
@@ -56,11 +42,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future _prepareApp() async {
-    //Create, update prepare datbase for app
     await DBProvider.db.initDB();
-
     setState(() {
-      loading = false;
+      _loading = false;
     });
   }
 
@@ -73,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await _checkNotificationCallback(payload);
   }
 
+  //TODO Switch using JSON in here in case it gets more complex
   Future<void> _checkNotificationCallback(String payload) async {
     if (payload != null) {
       var result = payload.split(";");
@@ -88,10 +73,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => TodoEditorPage(
-                          title: "To-do details",
-                          item: TodoItem.fromMap(dbResult.first),
-                          editMode: false)),
+                          "To-do details", TodoItem.fromMap(dbResult.first),
+                          initialEditMode: false)),
                 );
+              } else {
+                debugPrint("Unable to find notification element");
               }
             }
             break;
@@ -101,34 +87,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _getBody() {
-    if (loading) {
-      return Center(
-        child: CircularProgressIndicator(),
-      );
-    } else {
-      return todoListWidgetHelper.buildList();
-    }
-  }
-
-  void _stateChanged() {
-    setState(() {});
+    if (_loading)
+      return Scaffold(
+          appBar: AppBar(
+            title: Text(widget.title),
+          ),
+          body: Center(child: CircularProgressIndicator()));
+    else
+      return ListTodoWideget(widget.title);
   }
 
   @override
   Widget build(BuildContext context) {
-    todoListWidgetHelper = new TodoList(context, _stateChanged);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: _getBody(),
-      floatingActionButton: loading
-          ? null
-          : FloatingActionButton(
-              onPressed: _openAddNote,
-              tooltip: 'Add note',
-              child: Icon(Icons.add),
-            ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+    return _getBody();
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:owly_todo/helper/dbProvider.dart';
+import 'package:owly_todo/helper/todoitem.dart';
 import 'package:owly_todo/main.dart';
-import 'package:owly_todo/screens/list/widgets/todoListView.dart';
 import 'package:validate/validate.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
@@ -9,15 +10,18 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 enum ConfirmAction { CANCEL, ACCEPT }
 
 class TodoEditorPage extends StatefulWidget {
-  TodoEditorPage({Key key, this.title, this.item, this.editMode})
+  TodoEditorPage(this.title, this.item, {Key key, this.initialEditMode})
       : super(key: key);
 
-  final bool editMode;
+  final bool initialEditMode;
   final String title;
   final TodoItem item;
 
   @override
-  _EditorState createState() => _EditorState(editMode);
+  _EditorState createState() {
+    assert(item !=null);
+    return _EditorState(initialEditMode ?? false);
+  }
 }
 
 class _EditorState extends State<TodoEditorPage> {
@@ -79,7 +83,7 @@ class _EditorState extends State<TodoEditorPage> {
         }, () {
           return db.insert("todo", widget.item.toMap());
         });
-        if(widget.item.dueDate != null)
+        if (widget.item.dueDate != null)
           await _sheduleNotification(widget.item);
         Navigator.of(context).pop();
       }
@@ -98,17 +102,12 @@ class _EditorState extends State<TodoEditorPage> {
   }
 
   Future<void> _sheduleNotification(TodoItem item) async {
-    try{
+    try {
       flutterLocalNotificationsPlugin.cancel(item.id.hashCode);
-    }
-    catch(e){
-
-    }
+    } catch (e) {}
 
     var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
-        'todo_item_pending',
-        'Owly Todo',
-        'Pending todo items');
+        'todo_item_pending', 'Owly Todo', 'Pending todo items');
     var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
     NotificationDetails platformChannelSpecifics = new NotificationDetails(
         androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
@@ -116,10 +115,9 @@ class _EditorState extends State<TodoEditorPage> {
         item.id.hashCode,
         item.title,
         'You have a todo item pending',
-        item.dueDate, 
+        item.dueDate,
         platformChannelSpecifics,
         payload: "openTodo;${item.id}");
-        
   }
 
   Future<ConfirmAction> _asyncConfirmDialog(BuildContext context) async {
@@ -265,7 +263,8 @@ class _EditorState extends State<TodoEditorPage> {
       changeFound = true;
     if (widget.item.dueDate != null) {
       if (_dueDateController.text !=
-          new DateFormat.yMd().add_Hm().format(widget.item.dueDate)) changeFound = true;
+          new DateFormat.yMd().add_Hm().format(widget.item.dueDate))
+        changeFound = true;
     }
 
     _changed = changeFound;
