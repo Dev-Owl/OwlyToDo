@@ -7,6 +7,8 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+//TODO Check code here, clean up if required
+
 enum ConfirmAction { CANCEL, ACCEPT }
 
 class TodoEditorPage extends StatefulWidget {

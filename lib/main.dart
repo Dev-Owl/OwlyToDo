@@ -3,7 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:owly_todo/screens/list/list.dart';
 
 //TODO check notes in the app
-//TODO clean up code before first release
+
 
 //Global endpoint for notifications
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;

@@ -5,6 +5,7 @@ import 'package:owly_todo/helper/todoitem.dart';
 import 'package:owly_todo/screens/editor/editor.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:owly_todo/screens/widgets/gloablDrawer.dart';
 
 class ListTodoWideget extends StatefulWidget {
   ListTodoWideget(this.title);
@@ -46,13 +47,20 @@ class _TodoList extends State<ListTodoWideget> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () => debugPrint("pressed"),
+          )
+        ],
       ),
       body: _buildList(),
+      drawer: GlobalDrawerWidget(widget.title),
       floatingActionButton: FloatingActionButton(
         onPressed: () => openEditor(TodoItem()),
         tooltip: 'Add note',
         child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 
