@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:owly_todo/helper/dbProvider.dart';
-import 'package:owly_todo/helper/todoitem.dart';
 import 'package:owly_todo/main.dart';
+import 'package:owly_todo/models/todoitem.dart';
 import 'package:validate/validate.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';

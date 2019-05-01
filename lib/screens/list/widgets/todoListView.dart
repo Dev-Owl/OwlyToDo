@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:owly_todo/helper/dbProvider.dart';
-import 'package:owly_todo/helper/todoitem.dart';
+import 'package:owly_todo/helper/settingProvider.dart';
+import 'package:owly_todo/models/todoitem.dart';
 import 'package:owly_todo/screens/editor/editor.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -19,9 +20,13 @@ class ListTodoWideget extends StatefulWidget {
 
 class _TodoList extends State<ListTodoWideget> {
   final List<TodoItem> listData = new List();
-
+  final SettingProvider _setting = SettingProvider();
   bool get isEmpty {
     return listData.isEmpty;
+  }
+
+  void addNewItem() {
+    openEditor(TodoItem());
   }
 
   void openEditor(TodoItem itemToEdit, {bool editMode = true}) {
@@ -34,8 +39,17 @@ class _TodoList extends State<ListTodoWideget> {
 
   Future<List<TodoItem>> getData() async {
     var db = await DBProvider.db.database;
-    var data =
-        await db.rawQuery("SELECT * FROM Todo ORDER BY done ASC,dueDate DESC");
+    bool hideDoneElements =
+        await _setting.getSettingValue(SettingProvider.HideDoneItems, defaultValue: true);
+    String wherePart;
+    String orderByPart;
+    if (hideDoneElements) {
+      orderByPart = "dueDate DESC";
+      wherePart = "done = 0";
+    } else {
+      orderByPart = "done ASC,dueDate DESC";
+    }
+    var data = await db.query("Todo", where: wherePart, orderBy: orderByPart);
     return data?.map((map) {
           return TodoItem.fromMap(map);
         })?.toList() ??
@@ -47,17 +61,11 @@ class _TodoList extends State<ListTodoWideget> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () => debugPrint("pressed"),
-          )
-        ],
       ),
       body: _buildList(),
-      drawer: GlobalDrawerWidget(widget.title),
+      drawer: GlobalDrawerWidget(widget.title, addNewItem),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => openEditor(TodoItem()),
+        onPressed: () => addNewItem(),
         tooltip: 'Add note',
         child: Icon(Icons.add),
       ),

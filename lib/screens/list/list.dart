@@ -2,8 +2,8 @@ import 'dart:core';
 
 import 'package:flutter/material.dart';
 import 'package:owly_todo/helper/dbProvider.dart';
-import 'package:owly_todo/helper/todoitem.dart';
 import 'package:owly_todo/main.dart';
+import 'package:owly_todo/models/todoitem.dart';
 import 'package:owly_todo/screens/editor/editor.dart';
 import 'package:owly_todo/screens/list/widgets/todoListView.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';

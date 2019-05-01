@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:owly_todo/screens/settings/settings.dart';
 
 class GlobalDrawerWidget extends StatefulWidget {
-
-  GlobalDrawerWidget(this.title);
+  GlobalDrawerWidget(this.title, this.addNew);
 
   final String title;
+  final VoidCallback addNew;
 
   @override
   State<StatefulWidget> createState() {
@@ -15,6 +16,13 @@ class GlobalDrawerWidget extends StatefulWidget {
 
 class _GlobalDrawer extends State<GlobalDrawerWidget> {
   
+  void _openSettings() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => SettingScreenWidget("Settings")));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -38,16 +46,15 @@ class _GlobalDrawer extends State<GlobalDrawerWidget> {
           title: Text("Add new"),
           onTap: () {
             Navigator.pop(context);
+            widget.addNew();
           },
         ),
         ListTile(
           leading: Icon(Icons.settings),
           title: Text('Settings'),
           onTap: () {
-            // Update the state of the app
-            // ...
-            // Then close the drawer
             Navigator.pop(context);
+             _openSettings();
           },
         ),
       ],
