@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingProvider {
   static const String HideDoneItems = "HideDoneItems";
+  static const String FirstStart = "FirstStart";
 
   Future<T> getSettingValue<T>(String key,{dynamic defaultValue}) async {
     assert(key != null);

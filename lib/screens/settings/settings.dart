@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:owly_todo/helper/settingProvider.dart';
 
+//TODO add setting screen to change:
+// - Save on leave
+
 class SettingScreenWidget extends StatefulWidget {
   SettingScreenWidget(this.title);
 

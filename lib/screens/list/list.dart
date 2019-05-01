@@ -8,11 +8,6 @@ import 'package:owly_todo/screens/editor/editor.dart';
 import 'package:owly_todo/screens/list/widgets/todoListView.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-//TODO show setting icon to change setting
-//TODO add setting screen to change:
-// - Hide done by default
-// - Save on leave
-
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
   final String title;
