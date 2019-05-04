@@ -1,4 +1,4 @@
-package com.example.owly_todo;
+package com.devowl.owly_todo;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
