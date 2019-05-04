@@ -9,15 +9,23 @@ import 'package:owly_todo/screens/list/widgets/todoListView.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage(this.notificationLaunch, this.notificationPayload,
+      {Key key, this.title})
+      : super(key: key);
   final String title;
+  final bool notificationLaunch;
+  final String notificationPayload;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _MyHomePageState createState() => _MyHomePageState(notificationLaunch);
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  _MyHomePageState(this.notificationLaunch);
+
   bool _loading = true;
+  bool notificationLaunch;
+  TodoItem itemToLaunchFromNotification;
 
   @override
   void initState() {
@@ -38,6 +46,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future _prepareApp() async {
     await DBProvider.db.initDB();
+    if (notificationLaunch) {
+      itemToLaunchFromNotification = await getItemFromNotificationPayLoad();
+      if (itemToLaunchFromNotification == null) notificationLaunch = false;
+    }
     setState(() {
       _loading = false;
     });
@@ -52,6 +64,19 @@ class _MyHomePageState extends State<MyHomePage> {
     await _checkNotificationCallback(payload);
   }
 
+  Future<TodoItem> getItemFromNotificationPayLoad({String payload}) async {
+    payload = payload ?? widget.notificationPayload;
+    assert(payload != null);
+    var result = payload.split(";");
+    var db = await DBProvider.db.database;
+    var dbResult =
+        await db.query("todo", where: "id = ?", whereArgs: [result[1]]);
+    if (dbResult != null && dbResult.length > 0)
+      return TodoItem.fromMap(dbResult.first);
+    else
+      return null;
+  }
+
   //TODO Switch using JSON in here in case it gets more complex
   Future<void> _checkNotificationCallback(String payload) async {
     if (payload != null) {
@@ -60,15 +85,13 @@ class _MyHomePageState extends State<MyHomePage> {
         switch (result[0]) {
           case 'openTodo':
             {
-              var db = await DBProvider.db.database;
-              var dbResult = await db
-                  .query("todo", where: "id = ?", whereArgs: [result[1]]);
-              if (dbResult != null && dbResult.length > 0) {
+              var item = await getItemFromNotificationPayLoad(payload: payload);
+              if (item != null) {
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) => TodoEditorPage(
-                          "To-do details", TodoItem.fromMap(dbResult.first),
+                          "To-do details", item,
                           initialEditMode: false)),
                 );
               } else {
@@ -88,8 +111,16 @@ class _MyHomePageState extends State<MyHomePage> {
             title: Text(widget.title),
           ),
           body: Center(child: CircularProgressIndicator()));
-    else
-      return ListTodoWideget(widget.title);
+    else{
+      if(notificationLaunch){
+        notificationLaunch = false;
+        return TodoEditorPage("To-do details",itemToLaunchFromNotification,initialEditMode: false,);
+      }
+      else{
+        return ListTodoWideget(widget.title);
+      }
+    }
+      
   }
 
   @override

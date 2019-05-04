@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:owly_todo/screens/widgets/gloablDrawer.dart';
 
+//TODO Add a search view
+
 class ListTodoWideget extends StatefulWidget {
   ListTodoWideget(this.title);
 
