@@ -31,7 +31,9 @@ class TodoItem {
 
   Map<String, dynamic> toMap({bool skipId = false}) {
     var map = new Map<String, dynamic>();
-    if (!skipId) map["id"] = id?.isEmpty ?? new Uuid().v4();
+    if(id?.isEmpty ?? true)
+      id = new Uuid().v4();
+    if (!skipId) map["id"] = id;
 
     map["title"] = title;
     map["description"] = description;
