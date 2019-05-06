@@ -46,10 +46,10 @@ class _TodoList extends State<ListTodoWideget> {
     String wherePart;
     String orderByPart;
     if (hideDoneElements) {
-      orderByPart = "dueDate DESC";
+      orderByPart = "dueDate ASC";
       wherePart = "done = 0";
     } else {
-      orderByPart = "done ASC,dueDate DESC";
+      orderByPart = "done ASC,dueDate ASC";
     }
     var data = await db.query("Todo", where: wherePart, orderBy: orderByPart);
     return data?.map((map) {

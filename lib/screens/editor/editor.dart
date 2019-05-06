@@ -161,6 +161,7 @@ class _EditorState extends State<TodoEditorPage> {
             onSaved: (String value) {
               widget.item.title = value;
             },
+            autofocus: true,
             controller: _titleController,
             validator: (String value) {
               try {

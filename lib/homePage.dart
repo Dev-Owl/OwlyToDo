@@ -5,7 +5,7 @@ import 'package:owly_todo/helper/dbProvider.dart';
 import 'package:owly_todo/main.dart';
 import 'package:owly_todo/models/todoitem.dart';
 import 'package:owly_todo/screens/editor/editor.dart';
-import 'package:owly_todo/screens/list/widgets/todoListView.dart';
+import 'package:owly_todo/screens/list/todoListView.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -32,7 +32,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     //Init the notificaiton plugin
     var initializationSettingsAndroid = AndroidInitializationSettings(
-        'app_icon'); //TODO Replace the current icon
+        'app_icon'); //TODO Replace the current icon and launcher
     var initializationSettingsIOS = IOSInitializationSettings(
         onDidReceiveLocalNotification: onDidRecieveLocalNotification);
 
