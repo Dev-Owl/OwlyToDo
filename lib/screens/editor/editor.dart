@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:owly_todo/helper/dbProvider.dart';
+import 'package:owly_todo/helper/settingProvider.dart';
 import 'package:owly_todo/main.dart';
 import 'package:owly_todo/models/todoitem.dart';
 import 'package:validate/validate.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 
 //TODO Check code here, clean up if required
 
@@ -21,14 +23,13 @@ class TodoEditorPage extends StatefulWidget {
 
   @override
   _EditorState createState() {
-    assert(item !=null);
+    assert(item != null);
     return _EditorState(initialEditMode ?? false);
   }
 }
 
 class _EditorState extends State<TodoEditorPage> {
   final GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
-  final TextEditingController _dueDateController = new TextEditingController();
   final TextEditingController _titleController = new TextEditingController();
   final TextEditingController _descrptionController =
       new TextEditingController();
@@ -39,54 +40,26 @@ class _EditorState extends State<TodoEditorPage> {
 
   _EditorState(this._editMode);
 
-  DateTime convertToDate(String input) {
-    try {
-      var d = new DateFormat.yMd().add_Hm().parseStrict(input);
-      return d;
-    } catch (e) {
-      return null;
+  Future<bool> upsertDataIfValid() async {
+    if (_formKey.currentState.validate()) {
+      _formKey.currentState.save();
+      var db = await DBProvider.db.database;
+      await DBProvider.db.upsert(() {
+        return db.update("todo", widget.item.toMap(skipId: true),
+            where: "id = ?", whereArgs: [widget.item.id]);
+      }, () {
+        return db.insert("todo", widget.item.toMap());
+      });
+      return true;
+    } else {
+      return false;
     }
-  }
-
-  Future _chooseDate(BuildContext context, String initialDateString) async {
-    var now = new DateTime.now();
-    var initialDate = convertToDate(initialDateString) ?? now;
-    initialDate = (initialDate.year >= 1970 ? initialDate : now);
-    //TODO Allow to pick time here too
-    var result = await showDatePicker(
-        context: context,
-        initialDate: initialDate,
-        firstDate: new DateTime(1970),
-        lastDate: new DateTime(2040));
-    setState(() {
-      widget.item.dueDate = result;
-      if (result != null)
-        _dueDateController.text = new DateFormat.yMd().add_Hm().format(result);
-      else
-        _dueDateController.text = null;
-      _dateChanged = true;
-    });
-  }
-
-  bool isValidDate(String date) {
-    if (date.isEmpty) return true;
-    var d = convertToDate(date);
-    return d != null;
   }
 
   Future _performeEditorAction() async {
     if (_editMode) {
-      if (_formKey.currentState.validate()) {
-        _formKey.currentState.save();
-        var db = await DBProvider.db.database;
-        await DBProvider.db.upsert(() {
-          return db.update("todo", widget.item.toMap(skipId: true),
-              where: "id = ?", whereArgs: [widget.item.id]);
-        }, () {
-          return db.insert("todo", widget.item.toMap());
-        });
-        if (widget.item.dueDate != null)
-          await _sheduleNotification(widget.item);
+      if (await upsertDataIfValid()) {
+        await _sheduleNotification(widget.item);
         Navigator.of(context).pop();
       }
     } else {
@@ -107,18 +80,14 @@ class _EditorState extends State<TodoEditorPage> {
     try {
       flutterLocalNotificationsPlugin.cancel(item.id.hashCode);
     } catch (e) {}
-
+    if (item.dueDate == null) return;
     var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
         'todo_item_pending', 'Owly Todo', 'Pending todo items');
     var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
     NotificationDetails platformChannelSpecifics = new NotificationDetails(
         androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.schedule(
-        item.id.hashCode,
-        item.title,
-        'You have a todo item pending',
-        item.dueDate,
-        platformChannelSpecifics,
+    await flutterLocalNotificationsPlugin.schedule(item.id.hashCode, item.title,
+        'You have a todo item pending', item.dueDate, platformChannelSpecifics,
         payload: "openTodo;${item.id}");
   }
 
@@ -181,27 +150,19 @@ class _EditorState extends State<TodoEditorPage> {
             },
             controller: _descrptionController,
           ),
-          new Row(
-            children: <Widget>[
-              new Expanded(
-                  child: TextFormField(
-                decoration: InputDecoration(
-                  labelText: "Due date",
-                ),
-                onSaved: (String value) {
-                  widget.item.dueDate = convertToDate(value);
-                },
-                keyboardType: TextInputType.datetime,
-                controller: _dueDateController,
-                validator: (val) => isValidDate(val) ? null : "Invalid date",
-              )),
-              new IconButton(
-                  icon: Icon(Icons.calendar_today),
-                  tooltip: 'Choose date',
-                  onPressed: (() {
-                    _chooseDate(context, _dueDateController.text);
-                  }))
-            ],
+          DateTimePickerFormField(
+            inputType: InputType.both,
+            format: DateFormat.yMd().add_jm(),
+            editable: false,
+            initialValue: widget.item.dueDate,
+            decoration: InputDecoration(
+                labelText: 'Due date', hasFloatingPlaceholder: false),
+            onSaved: (value) {
+              widget.item.dueDate = value;
+            },
+            onChanged: (result){
+               _dateChanged = result != widget.item.dueDate;
+            },
           )
         ],
       ),
@@ -235,7 +196,19 @@ class _EditorState extends State<TodoEditorPage> {
     );
   }
 
-  Future<bool> _onWillPop() {
+  Future<bool> _onWillPop() async {
+    if (_editMode && (_changed | _dateChanged)) {
+      var saveOnLeave = await SettingProvider().getSettingValue<bool>(
+          SettingProvider.SaveOnLeave,
+          defaultValue: false);
+      if (saveOnLeave) {
+        if (await upsertDataIfValid()) {
+          await _sheduleNotification(widget.item);
+          return true;
+        }
+      }
+    }
+
     return _editMode && (_changed | _dateChanged)
         ? showDialog<bool>(
               context: context,
@@ -256,7 +229,7 @@ class _EditorState extends State<TodoEditorPage> {
                   ),
             ) ??
             false
-        : Navigator.of(context).pop(true);
+        : true;
   }
 
   void _checkForAnyChange() {
@@ -264,11 +237,6 @@ class _EditorState extends State<TodoEditorPage> {
     if (_titleController.text != widget.item.title) changeFound = true;
     if (_descrptionController.text != widget.item.description)
       changeFound = true;
-    if (widget.item.dueDate != null) {
-      if (_dueDateController.text !=
-          new DateFormat.yMd().add_Hm().format(widget.item.dueDate))
-        changeFound = true;
-    }
 
     _changed = changeFound;
   }
@@ -278,11 +246,6 @@ class _EditorState extends State<TodoEditorPage> {
     super.initState();
     _titleController.text = widget.item.title;
     _descrptionController.text = widget.item.description;
-    if (widget.item.dueDate != null)
-      _dueDateController.text =
-          new DateFormat.yMd().add_Hm().format(widget.item.dueDate);
-
-    _dueDateController.addListener(_checkForAnyChange);
     _titleController.addListener(_checkForAnyChange);
     _descrptionController.addListener(_checkForAnyChange);
   }

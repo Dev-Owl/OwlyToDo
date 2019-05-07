@@ -1,4 +1,5 @@
 import 'package:owly_todo/helper/dbProvider.dart';
+import 'package:owly_todo/main.dart';
 import 'package:uuid/uuid.dart';
 
 class TodoItem {
@@ -26,6 +27,11 @@ class TodoItem {
 
   Future delete() async {
     var db = await DBProvider.db.database;
+    try{
+      flutterLocalNotificationsPlugin.cancel(id.hashCode);
+    }catch(ex){
+      //we dont care
+    }
     await db.delete("todo", where: "id = ?", whereArgs: [id]);
   }
 

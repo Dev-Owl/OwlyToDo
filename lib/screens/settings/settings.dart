@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:owly_todo/helper/settingProvider.dart';
 
-//TODO add setting screen to change:
-// - Save on leave
-
 class SettingScreenWidget extends StatefulWidget {
   SettingScreenWidget(this.title);
 
@@ -22,7 +19,10 @@ class _SettingState extends State<SettingScreenWidget> {
     var result = _LoadedSettingState();
     result.hideDoneElements = await widget.settingProvider
         .getSettingValue<bool>(SettingProvider.HideDoneItems,
-            defaultValue: false);
+            defaultValue: true);
+    result.saveOnLeave = await widget.settingProvider.getSettingValue<bool>(
+        SettingProvider.SaveOnLeave,
+        defaultValue: false);
     return result;
   }
 
@@ -51,12 +51,25 @@ class _SettingState extends State<SettingScreenWidget> {
                           Switch(
                             value: snapshot.data.hideDoneElements,
                             onChanged: (bool newVlaue) async {
-                              await widget.settingProvider.setSettingBoolValue(SettingProvider.HideDoneItems, newVlaue);
+                              await widget.settingProvider.setSettingBoolValue(
+                                  SettingProvider.HideDoneItems, newVlaue);
                             },
                           )
                         ],
                       ),
-                      Divider()
+                      Divider(),
+                      Row(
+                        children: <Widget>[
+                          Expanded(child: Text("Save on leave")),
+                          Switch(
+                            value: snapshot.data.saveOnLeave,
+                            onChanged: (bool newVlaue) async {
+                              await widget.settingProvider.setSettingBoolValue(
+                                  SettingProvider.SaveOnLeave, newVlaue);
+                            },
+                          )
+                        ],
+                      ),
                     ],
                     padding: EdgeInsets.all(16),
                   );
@@ -67,5 +80,6 @@ class _SettingState extends State<SettingScreenWidget> {
 }
 
 class _LoadedSettingState {
-  bool hideDoneElements = false;
+  bool hideDoneElements = true;
+  bool saveOnLeave = false;
 }
