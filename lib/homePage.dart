@@ -7,6 +7,7 @@ import 'package:owly_todo/models/todoitem.dart';
 import 'package:owly_todo/screens/editor/editor.dart';
 import 'package:owly_todo/screens/list/todoListView.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:owly_todo/screens/topic/topicList.dart';
 
 class MyHomePage extends StatefulWidget {
   MyHomePage(this.notificationLaunch, this.notificationPayload,
@@ -117,7 +118,7 @@ class _MyHomePageState extends State<MyHomePage> {
         return TodoEditorPage("To-do details",itemToLaunchFromNotification,initialEditMode: false,);
       }
       else{
-        return ListTodoWideget(widget.title);
+        return TopicListWidget("Topics");
       }
     }
       

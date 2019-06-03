@@ -9,6 +9,7 @@ class TodoItem {
   bool done = false;
   DateTime dueDate;
   DateTime doneDate;
+  String topicId;
 
   TodoItem();
 
@@ -54,6 +55,7 @@ class TodoItem {
     } else {
       map["doneDate"] = null;
     }
+    map["topicId"] = topicId;
     return map;
   }
 
@@ -66,5 +68,6 @@ class TodoItem {
       dueDate = new DateTime.fromMillisecondsSinceEpoch(map["dueDate"]);
     if (map["doneDate"] != null)
       doneDate = new DateTime.fromMillisecondsSinceEpoch(map["doneDate"]);
+    topicId = map["topicId"];
   }
 }

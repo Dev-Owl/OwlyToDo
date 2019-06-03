@@ -1,13 +1,15 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 typedef IntCallback = Future<int> Function();
+typedef UpgradeCallback = FutureOr<void> Function(Database db);
 
 class DBProvider {
   DBProvider._();
   static final DBProvider db = DBProvider._();
-  static final int version = 1;
+  static final int version = 2;
   static Database _database;
 
   Future<Database> get database async {
@@ -25,18 +27,40 @@ class DBProvider {
 
   Future initDB() async {
     String path = join(await getDatabasesPath(), "OwlyTodo.db");
-     //TODO Add funcion to handle db upgrade below
     return await openDatabase(path, version: version, onOpen: (db) {},
         onCreate: (Database db, int version) async {
-      //TODO add other tables using batch below
-      await db.execute("CREATE TABLE Todo ("
+      var dbBatch = db.batch();
+      dbBatch.execute("CREATE TABLE Todo ("
           "id TEXT PRIMARY KEY,"
           "title TEXT,"
           "description TEXT,"
           "done BIT,"
           "dueDate INTEGER,"
-          "doneDate INTEGER"
-          ")");
+          "doneDate INTEGER,"
+          "topicId TEXT"
+          "); ");
+      dbBatch.execute("CREATE TABLE Topic ("
+          "id TEXT PRIMARY KEY,"
+          "name TEXT"
+          "color TEXT"
+          "pinned BIT); ");
+      await dbBatch.commit(noResult: true);
+    }, onUpgrade: (Database db, currentVersion, newVersion) async {
+      final upgradeCalls = {
+        2 : (Database db) async {
+          await db.execute("CREATE TABLE Topic ("
+          "id TEXT PRIMARY KEY,"
+          "name TEXT,"
+          "color TEXT,"
+          "pinned BIT);");
+          await db.execute("ALTER TABLE todo ADD COLUMN topicId TEXT");
+        },
+        
+      };
+      upgradeCalls.forEach((vesion,call) async {
+        if(version > currentVersion)
+          await call(db);
+      });
     });
   }
 

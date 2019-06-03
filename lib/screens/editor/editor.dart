@@ -11,8 +11,6 @@ import 'package:datetime_picker_formfield/datetime_picker_formfield.dart';
 
 //TODO Check code here, clean up if required
 
-enum ConfirmAction { CANCEL, ACCEPT }
-
 class TodoEditorPage extends StatefulWidget {
   TodoEditorPage(this.title, this.item, {Key key, this.initialEditMode})
       : super(key: key);
@@ -65,7 +63,7 @@ class _EditorState extends State<TodoEditorPage> {
     } else {
       if (widget.item.done) {
         var result = await _asyncConfirmDialog(context);
-        if (result == ConfirmAction.ACCEPT) {
+        if (result) {
           await widget.item.setDoneFlag(false);
           setState(() {});
         }
@@ -91,8 +89,8 @@ class _EditorState extends State<TodoEditorPage> {
         payload: "openTodo;${item.id}");
   }
 
-  Future<ConfirmAction> _asyncConfirmDialog(BuildContext context) async {
-    return showDialog<ConfirmAction>(
+  Future<bool> _asyncConfirmDialog(BuildContext context) async {
+    return showDialog<bool>(
       context: context,
       barrierDismissible: false, // user must tap button for close dialog!
       builder: (BuildContext context) {
@@ -103,13 +101,13 @@ class _EditorState extends State<TodoEditorPage> {
             FlatButton(
               child: const Text('Changed my mind'),
               onPressed: () {
-                Navigator.of(context).pop(ConfirmAction.CANCEL);
+                Navigator.of(context).pop(false);
               },
             ),
             FlatButton(
               child: const Text('Make it so'),
               onPressed: () {
-                Navigator.of(context).pop(ConfirmAction.ACCEPT);
+                Navigator.of(context).pop(true);
               },
             )
           ],

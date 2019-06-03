@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:owly_todo/helper/settingProvider.dart';
 import 'package:owly_todo/homePage.dart';
+import 'package:owly_todo/screens/topic/topicList.dart';
 
 //Global endpoint for notifications
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.amber,
       ),
       home: MyHomePage(notificationLaunch, notificationPayload,
-          title: 'Owly To-do'), //TODO show a silder if its the first start
+      title: 'Owly To-do'), //TODO show a silder if its the first start
     );
   }
 }
