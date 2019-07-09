@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 typedef IntCallback = Future<int> Function();
-typedef UpgradeCallback = FutureOr<void> Function(Database db);
+typedef UpgradeCallback = FutureOr<void> Function(Database db, Batch dbBatch);
 
 class DBProvider {
   DBProvider._();
@@ -25,6 +25,21 @@ class DBProvider {
     return new File(path).exists();
   }
 
+  String _createTopicTableScript() {
+    return "CREATE TABLE Topic ("
+        "id TEXT PRIMARY KEY,"
+        "name TEXT,"
+        "color TEXT,"
+        "pinned BIT); ";
+  }
+
+  String _createTodoTopicTable() {
+    return "CREATE TABLE TodoTopic ("
+        "Id TEXT PRIMARY KEY,"
+        "TodoId TEXT,"
+        "TopicId TEXT)";
+  }
+
   Future initDB() async {
     String path = join(await getDatabasesPath(), "OwlyTodo.db");
     return await openDatabase(path, version: version, onOpen: (db) {},
@@ -36,31 +51,23 @@ class DBProvider {
           "description TEXT,"
           "done BIT,"
           "dueDate INTEGER,"
-          "doneDate INTEGER,"
-          "topicId TEXT"
+          "doneDate INTEGER"
           "); ");
-      dbBatch.execute("CREATE TABLE Topic ("
-          "id TEXT PRIMARY KEY,"
-          "name TEXT"
-          "color TEXT"
-          "pinned BIT); ");
+      dbBatch.execute(_createTopicTableScript());
+      dbBatch.execute(_createTodoTopicTable());
       await dbBatch.commit(noResult: true);
     }, onUpgrade: (Database db, currentVersion, newVersion) async {
       final upgradeCalls = {
-        2 : (Database db) async {
-          await db.execute("CREATE TABLE Topic ("
-          "id TEXT PRIMARY KEY,"
-          "name TEXT,"
-          "color TEXT,"
-          "pinned BIT);");
-          await db.execute("ALTER TABLE todo ADD COLUMN topicId TEXT");
+        2: (Database db, Batch dbBatch) async {
+          dbBatch.execute(_createTopicTableScript());
+          dbBatch.execute(_createTodoTopicTable());
         },
-        
       };
-      upgradeCalls.forEach((vesion,call) async {
-        if(version > currentVersion)
-          await call(db);
+      var dbBatch = db.batch();
+      upgradeCalls.forEach((vesion, call) async {
+        if (version > currentVersion) await call(db, dbBatch);
       });
+      await dbBatch.commit(noResult: true);
     });
   }
 

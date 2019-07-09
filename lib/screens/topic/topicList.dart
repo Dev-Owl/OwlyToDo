@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:owly_todo/helper/dbProvider.dart';
 import 'package:owly_todo/models/topic.dart';
+import 'package:owly_todo/screens/topic/topicEditor.dart';
 import 'package:owly_todo/screens/widgets/gloablDrawer.dart';
 
 class TopicListWidget extends StatefulWidget {
@@ -16,12 +17,15 @@ class TopicListWidget extends StatefulWidget {
 
 class _TopicList extends State<TopicListWidget> {
   void addNewItem() {
-    //TODO add new topic here, open detail page
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => TopicEditorWideget("New topic", TopicItem())));
   }
 
   Future<List<TopicItem>> getData() async {
     var db = await DBProvider.db.database;
-    var data = await db.rawQuery("SELECT topic.*,(SELECT COUNT(1) FROM Todo WHERE topicId = topic.id) as totalChilds FROM topic ORDER BY pinned ASC, name ASC");
+    var data = await db.rawQuery("SELECT topic.*,(SELECT COUNT(1) FROM TodoTopic WHERE TopicId = topic.id) as totalChilds FROM topic ORDER BY pinned ASC, name ASC");
     return data?.map((map) {
           return TopicItem.fromMap(map);
         })?.toList() ??

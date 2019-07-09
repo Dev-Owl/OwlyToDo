@@ -5,7 +5,6 @@ import 'package:owly_todo/helper/dbProvider.dart';
 import 'package:owly_todo/main.dart';
 import 'package:owly_todo/models/todoitem.dart';
 import 'package:owly_todo/screens/editor/editor.dart';
-import 'package:owly_todo/screens/list/todoListView.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:owly_todo/screens/topic/topicList.dart';
 
